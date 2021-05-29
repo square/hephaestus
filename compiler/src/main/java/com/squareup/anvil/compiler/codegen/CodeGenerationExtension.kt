@@ -64,10 +64,17 @@ internal class CodeGenerationExtension(
         }
       }
 
+    // Filter generated files that we
+    val originalKtFiles = files
+      .filterNot { ktFile ->
+        ktFile.virtualFilePath.contains(codeGenDir.path) ||
+          ktFile.packageFqName.pathSegments().firstOrNull()?.asString() == "anvil"
+      }
+
     val psiManager = PsiManager.getInstance(project)
 
     val anvilModule = RealAnvilModuleDescriptor(module)
-    anvilModule.addFiles(files)
+    anvilModule.addFiles(originalKtFiles)
 
     fun Collection<GeneratedFile>.toKtFile(): Collection<KtFile> {
       return this
@@ -95,7 +102,7 @@ internal class CodeGenerationExtension(
           codeGenerator.flush(codeGenDir, anvilModule).toKtFile()
         }
 
-    var newFiles = codeGenerators.generateCode(files)
+    var newFiles = codeGenerators.generateCode(originalKtFiles)
     while (newFiles.isNotEmpty()) {
       // Parse the KtFile for each generated file. Then feed the code generators with the new
       // parsed files until no new files are generated.

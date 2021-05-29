@@ -232,6 +232,12 @@ internal class BindingModuleGenerator(
             val annotation = it.annotationOrNull(annotationFqName)
             annotation != null && scope == annotation.scope(module).fqNameSafe
           }
+          .distinctBy {
+            // Usually, this doesn't happen. It's only needed for when you set
+            // `addGeneratedDirToSourceSets` to true. For incremental builds Anvil will pick up
+            // the same sources multiple times.
+            it.fqNameSafe
+          }
           .map { contributedClass ->
             val annotation = contributedClass.annotation(annotationFqName)
             val boundType = annotation.boundType(module, contributedClass, annotationFqName)
